@@ -11,11 +11,14 @@ interface LightboxModalProps {
 export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose, onInquireSimilar }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const restoreFocusOnClose = useRef(true);
 
   useEffect(() => {
     if (!item) return;
 
-    // Save previous active element to restore focus on close
+    restoreFocusOnClose.current = true;
+
+    // Save previous active element to restore focus on ordinary modal close.
     previousActiveElement.current = document.activeElement as HTMLElement;
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,7 +67,8 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose, onI
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
-      if (previousActiveElement.current) {
+
+      if (restoreFocusOnClose.current && previousActiveElement.current) {
         previousActiveElement.current.focus();
       }
     };
@@ -149,6 +153,8 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose, onI
             <button
               type="button"
               onClick={() => {
+                // The destination is Contact, so do not restore focus to the portfolio trigger.
+                restoreFocusOnClose.current = false;
                 onClose();
                 onInquireSimilar(item.title);
               }}
