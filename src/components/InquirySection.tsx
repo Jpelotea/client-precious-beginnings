@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Phone, MapPin, Clock, MessageSquare, Copy, Check, ExternalLink, Send } from 'lucide-react';
+import { formatLocalDateInput } from '../utils/date';
 
 interface InquiryFormData {
   name: string;
@@ -28,16 +29,15 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
 
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Sync service selection if passed
+  // Keep the selected service in the dedicated event-type field without
+  // repeatedly appending generated text to the visitor's free-form message.
   useEffect(() => {
     if (initialService) {
       setFormData((prev) => ({
         ...prev,
         eventType: initialService,
-        message: prev.message
-          ? `${prev.message}\nInterested in: ${initialService}`
-          : `Interested in: ${initialService}`,
       }));
     }
   }, [initialService]);
@@ -48,6 +48,8 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const validateRequiredFields = () => formRef.current?.reportValidity() ?? false;
 
   const generateBodyText = () => {
     return [
@@ -74,6 +76,8 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
   };
 
   const handleCopy = async () => {
+    if (!validateRequiredFields()) return;
+
     try {
       const text = generateBodyText();
       await navigator.clipboard.writeText(text);
@@ -86,12 +90,33 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
   };
 
   const formattedSms = () => {
-    const text = `Hi Ms. Janelle! Inquiry for ${formData.eventType || 'Event Services'}. Name: ${formData.name || 'Client'}. Contact: ${formData.contact || 'N/A'}. Date: ${formData.date || 'TBD'}. Venue: ${formData.venue || 'TBD'}. Guests: ${formData.guests || 'TBD'}.`;
+    const details = (formData.message || '').trim();
+    const text = [
+      `Hi Ms. Janelle! Inquiry for ${formData.eventType || 'Event Services'}.`,
+      `Name: ${formData.name || 'Client'}.`,
+      `Contact: ${formData.contact || 'N/A'}.`,
+      `Date: ${formData.date || 'TBD'}.`,
+      `Venue: ${formData.venue || 'TBD'}.`,
+      `Guests: ${formData.guests || 'TBD'}.`,
+      details ? `Details: ${details}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return `sms:+639399265029?body=${encodeURIComponent(text)}`;
   };
 
+  const handleSms = () => {
+    if (!validateRequiredFields()) return;
+    window.location.href = formattedSms();
+  };
+
   return (
-    <section id="contact" className="py-20 lg:py-24 bg-[#f1e3dd] border-t border-[#ded2c4]">
+    <section
+      id="contact"
+      tabIndex={-1}
+      className="py-20 lg:py-24 bg-[#f1e3dd] border-t border-[#ded2c4] focus:outline-none"
+    >
       <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
         <div className="max-w-2xl mb-12">
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#2c3a2a] leading-tight mb-3">
@@ -178,7 +203,7 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
 
           {/* Inquiry Form */}
           <div className="lg:col-span-8 bg-white border border-[#ded2c4] rounded-2xl p-6 sm:p-8 shadow-xs">
-            <form onSubmit={handleEmailSubmit} className="space-y-5" id="inquiryForm">
+            <form ref={formRef} onSubmit={handleEmailSubmit} className="space-y-5" id="inquiryForm">
               {/* Row 1: Name and Contact */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -239,7 +264,7 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
                     id="inquiry-event-date"
                     name="date"
                     type="date"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={formatLocalDateInput()}
                     value={formData.date}
                     onChange={handleChange}
                     className="w-full px-3.5 py-2.5 bg-[#faf6ef] border border-[#ded2c4] rounded-xl text-sm text-[#2b2420] focus:outline-none focus:ring-2 focus:ring-[#3c4a3a] cursor-pointer"
@@ -307,13 +332,14 @@ export const InquirySection: React.FC<InquirySectionProps> = ({ initialService }
                   <span>Continue by email</span>
                 </button>
 
-                <a
-                  href={formattedSms()}
+                <button
+                  type="button"
+                  onClick={handleSms}
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-xs sm:text-sm font-medium text-[#2c3a2a] bg-[#f1e3dd] hover:bg-[#ded2c4] transition-colors"
                 >
                   <Send className="w-4 h-4 text-[#3c4a3a]" />
                   <span>Send SMS</span>
-                </a>
+                </button>
 
                 <button
                   type="button"
