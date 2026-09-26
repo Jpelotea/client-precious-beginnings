@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Info } from 'lucide-react';
+import { formatLocalDateInput, parseLocalDateInput } from '../utils/date';
 
 export const TimelineGuide: React.FC = () => {
-  // Default to a target date 6 months from now
+  // Default to a target date 6 months from now using the visitor's local calendar.
   const [targetDate, setTargetDate] = useState<string>(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 6);
-    return d.toISOString().split('T')[0];
+    return formatLocalDateInput(d);
   });
 
   const [timeLeft, setTimeLeft] = useState<{
@@ -23,13 +24,13 @@ export const TimelineGuide: React.FC = () => {
     }
 
     const calculateTime = () => {
-      // Parse YYYY-MM-DD parts to treat as local calendar date
-      const parts = targetDate.split('-');
-      if (parts.length !== 3) {
+      const target = parseLocalDateInput(targetDate);
+
+      if (!target) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
-      const target = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 0, 0, 0);
+
       const difference = +target - +new Date();
       if (difference > 0) {
         setTimeLeft({
@@ -102,7 +103,7 @@ export const TimelineGuide: React.FC = () => {
               <input
                 id="timeline-target-date"
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={formatLocalDateInput()}
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
                 className="w-full px-4 py-2.5 bg-[#faf6ef] border border-[#ded2c4] rounded-xl text-sm font-medium text-[#2b2420] focus:outline-none focus:ring-2 focus:ring-[#3c4a3a] cursor-pointer"
@@ -142,19 +143,14 @@ export const TimelineGuide: React.FC = () => {
                   <>
                     Target Date:{' '}
                     {(() => {
-                      const parts = targetDate.split('-');
-                      if (parts.length === 3) {
-                        return new Date(
-                          Number(parts[0]),
-                          Number(parts[1]) - 1,
-                          Number(parts[2])
-                        ).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        });
-                      }
-                      return targetDate;
+                      const target = parseLocalDateInput(targetDate);
+                      return target
+                        ? target.toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : targetDate;
                     })()}
                   </>
                 ) : (
@@ -190,7 +186,7 @@ export const TimelineGuide: React.FC = () => {
                   <span className="text-xs font-semibold text-[#80602e] uppercase tracking-wider">
                     {step.phase}
                   </span>
-                  <span className="text-xs font-mono text-[#2b2420]/40">
+                  <span className="text-xs font-mono text-[#2b2420]/70">
                     Step 0{idx + 1}
                   </span>
                 </div>
