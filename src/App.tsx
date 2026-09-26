@@ -38,6 +38,7 @@ export default function App() {
     const el = document.getElementById('contact');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
+      el.focus({ preventScroll: true });
     }
   };
 
