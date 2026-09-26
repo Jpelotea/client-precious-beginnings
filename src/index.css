@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+
+  --color-paper: #faf6ef;
+  --color-ink: #2b2420;
+  --color-forest: #3c4a3a;
+  --color-forest-dark: #2c3a2a;
+  --color-forest-deep: #1d281c;
+  --color-rose: #c07a76;
+  --color-rose-muted: #af6b67;
+  --color-gold: #80602e;
+  --color-gold-light: #ab8548;
+  --color-blush: #f1e3dd;
+  --color-blush-soft: #f8f1ed;
+  --color-line: #ded2c4;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background-color: #faf6ef;
+  color: #2b2420;
+  font-family: var(--font-sans);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Consistent Date Input Styling Across Browsers */
+input[type="date"] {
+  color-scheme: light;
+  accent-color: #2c3a2a;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
